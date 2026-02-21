@@ -38,10 +38,54 @@ function drawSky(canvas) {
   ctx.putImageData(d,0,0);
 }
 
+const REGIONS = [
+  {
+    id: "eu-west-1",
+    name: "Ireland",
+    left: "8%",
+    top: "50vh",
+    size: "clamp(120px, 18vw, 280px)",
+    azCount: 3,
+    zIndex: 3,
+    opacity: 0.85,
+    blur: "blur(0.5px)",
+    shadow: "drop-shadow(0px 6px 5px rgba(0,0,0,0.55))",
+    labelSize: 8,
+  },
+  {
+    id: "ap-southeast-1",
+    name: "Singapore",
+    right: "8%",
+    top: "50vh",
+    size: "clamp(120px, 18vw, 280px)",
+    azCount: 3,
+    zIndex: 3,
+    opacity: 0.85,
+    blur: "blur(0.5px)",
+    shadow: "drop-shadow(0px 6px 5px rgba(0,0,0,0.55))",
+    labelSize: 8,
+  },
+  {
+    id: "us-east-1",
+    name: "N. Virginia",
+    left: "50%",
+    top: "58vh",
+    translateX: "-50%",
+    size: "clamp(280px, 42vw, 680px)",
+    azCount: 6,
+    zIndex: 4,
+    opacity: 1,
+    blur: "",
+    shadow: "drop-shadow(0px 14px 10px rgba(0,0,0,0.75))",
+    labelSize: 10,
+  },
+];
+
 export default function CloudCityScene() {
   const skyRef = useRef(null);
   const blendRef = useRef(null);
   const [mode, setMode] = useState("ARCH");
+  const [hoveredRegion, setHoveredRegion] = useState(null);
   const MODES = ["ARCH","COST","FAULT","GROWTH","DENSITY"];
 
   useEffect(() => {
@@ -119,36 +163,79 @@ export default function CloudCityScene() {
         pointerEvents:"none"
       }}/>
 
-      {/* Water shadow beneath island - like reference image */}
-      <div style={{
-        position:"absolute",
-        left:"50%",
-        top:"52%",
-        transform:"translateX(-50%)",
-        width:"42%",
-        height:"8%",
-        background:"radial-gradient(ellipse at center, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.18) 50%, transparent 80%)",
-        filter:"blur(25px)",
-        zIndex:3,
-        pointerEvents:"none"
-      }}/>
+{/* AWS Regions - rendered from data */}
+{REGIONS.map(r => {
+  const isHovered = hoveredRegion === r.id;
+  const transform = [
+    r.translateX ? `translateX(${r.translateX})` : "",
+    isHovered ? "scale(1.05)" : "scale(1)"
+  ].filter(Boolean).join(" ");
 
-      {/* Layer 4: Island - smaller for holistic view */}
-      <img 
-        src="/island.png" 
-        alt="CloudCity Platform" 
+  return (
+    <div
+      key={r.id}
+      style={{
+        position:"absolute",
+        left: r.left,
+        right: r.right,
+        top: r.top,
+        width: r.size,
+        zIndex: r.zIndex,
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center",
+        gap:6,
+        transform,
+        transition:"transform 0.25s ease",
+        cursor:"pointer"
+      }}
+      onMouseEnter={() => setHoveredRegion(r.id)}
+      onMouseLeave={() => setHoveredRegion(null)}
+    >
+      {/* Region label */}
+      <div style={{
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center",
+        gap:2,
+        opacity: r.opacity,
+        pointerEvents:"none"
+      }}>
+        <div style={{
+          color:"rgba(255,255,255,0.90)",
+          fontSize: r.labelSize,
+          fontWeight:700,
+          letterSpacing:"0.15em",
+          textShadow:"0 1px 4px rgba(0,0,0,0.6)"
+        }}>
+          {r.id}
+        </div>
+        <div style={{
+          color:"rgba(180,220,255,0.70)",
+          fontSize: r.labelSize - 2,
+          letterSpacing:"0.12em",
+          textShadow:"0 1px 3px rgba(0,0,0,0.5)"
+        }}>
+          {r.azCount} AZs · {r.name}
+        </div>
+      </div>
+
+      {/* Island image */}
+      <img
+        src="/island.png"
+        alt={r.id}
         style={{
-          position:"absolute",
-          left:"50%",
-          top:"58%",
-          transform:"translateX(-50%)",
-          width:"40%",
+          width:"100%",
           height:"auto",
-          zIndex:4,
+          opacity: r.opacity,
+          filter:`${r.shadow} ${r.blur}`,
           pointerEvents:"none",
-          filter:"drop-shadow(0 18px 35px rgba(0,0,0,0.28))"
+          display:"block"
         }}
       />
+    </div>
+  );
+})}
 
       {/* UI - Brand */}
       <div style={{ position:"absolute", top:16, left:18, zIndex:10 }}>
@@ -166,7 +253,7 @@ export default function CloudCityScene() {
           letterSpacing:"0.25em", 
           marginTop:2 
         }}>
-          1 REGION · AWS VISUALIZATION
+          3 REGIONS · AWS VISUALIZATION
         </div>
       </div>
 
